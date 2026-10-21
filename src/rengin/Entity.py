@@ -1,3 +1,5 @@
+from sys import argv
+
 import pygame #pygame-ce
 
 from .Vector import Vector2
@@ -16,21 +18,44 @@ class Entity(Object):
     x2:float = 0.0
     y2:float = 0.0
 
+    EntDebug = False
+
     scale:Vector2 = Vector2(x2, y2)
 
-    funcs:dict
+    funcs:dict[str, tuple[str, tuple]] = {}
 
-    def AddFunc(self, function:str) -> None:
+    def UpdateInput(self):
+        """Updates The Entity Input"""
+        from .Input import Event
+        PressedKeys = Event.InputEvent.GetPressedKeys()
+
+        for keys in PressedKeys:
+            for func in self.funcs:
+                self.ExecFunc(keys[0])
+
+    def AddFunc(self, key:str, functionName:str, functionArgs:tuple) -> None:
         """Adds a function to the entity functions dictionary"""
-        eval(function, self.funcs)
+        self.funcs[key] = (functionName, functionArgs)
+        print(f"Linked function: '{functionName}({functionArgs[0]}, {functionArgs[1]})' >> '{key}'")
 
-    def ExcFunc(self, function:str) -> None:
+    def DelFunc(self, key:str) -> None:
         """Deletes the function from the entity functions dictionary"""
-        self.funcs.__delitem__(function)
+        self.funcs.__delitem__(key)
 
-    def ExecFunc(self, function:str) -> None:
+    def ExecFunc(self, key:str) -> None:
         """Executes a function from the entity functions dictionary"""
-        self.funcs[function]()
+
+        try:
+            functionName, functionArgs = self.funcs[key]
+        except KeyError:
+            if self.EntDebug is True:
+                print(f"Function not found for key: {key}")
+            return
+
+        if self.EntDebug is True:
+            print(f"Current Function: self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
+        ev = eval(f"self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
+
 
 class Rect(Entity):
     """Rect Class (Entity): Inherits the Entity Class and Bridges to Pygame Rect"""
@@ -39,6 +64,7 @@ class Rect(Entity):
     color:tuple[int, int, int, int]
 
     def __init__(self, name:str, rectAtt:tuple[float,float,float,float], color:tuple[int, int, int, int]|None):
+        super().__init__()
         self.position = Vector2(rectAtt[0], rectAtt[1])
         self.scale = Vector2(rectAtt[2], rectAtt[3])
         self.Name = name
@@ -55,6 +81,13 @@ class Rect(Entity):
     def __call__(self):
         return self.RectObj
 
+    def GetParentClass(self) -> type:
+        """Returns the Parent Class of the Object"""
+        return self.__class__.__bases__[0]
+
+    def UpdateInput(self):
+        super().UpdateInput()
+
     def AddToScreen(self):
         """Add the Object to the Object Screen List"""
         Display.ScreenObjects.append(self)
@@ -66,6 +99,8 @@ class Rect(Entity):
         self.RectObj.y = self.position.y
 
         Display.ScreenObjects[Display.ScreenObjects.index(self)].position = self.position
+        if self.EntDebug is True:
+            return "Moved to: " + str(self.position)
 
     def Draw(self):
         """Draws the Entity"""
