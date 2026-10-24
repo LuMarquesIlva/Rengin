@@ -1,9 +1,20 @@
 from sys import argv
 
 import pygame #pygame-ce
+from PIL import Image
 
 from .Vector import Vector2
 from .Display import Display
+
+def LoadImage(path:str) -> pygame.surface.Surface|None:
+    """Loads an Image and returns a Pygame Surface"""
+    try:
+        image = pygame.image.load(path)
+        return image
+    except Exception as e:
+        print(f"Error loading image: {path} - {e}")
+        return None
+    
 
 class Object:
     """Object Class: Base class that adds position vector"""
@@ -18,7 +29,8 @@ class Entity(Object):
     x2:float = 0.0
     y2:float = 0.0
 
-    EntDebug = False
+    EntDebug:bool = False
+    EntityInputDebug:bool = False
 
     scale:Vector2 = Vector2(x2, y2)
 
@@ -31,12 +43,25 @@ class Entity(Object):
 
         for keys in PressedKeys:
             for func in self.funcs:
+                if self.EntityInputDebug is True:
+                    print(f"Executing function for key: {keys[0]}")
                 self.ExecFunc(keys[0])
+
+    def IsFuncExecuting(self, key:str) -> bool:
+        """Checks if the function is executing for the given key"""
+        from .Input import Event
+        PressedKeys = Event.InputEvent.GetPressedKeys()
+
+        for keys in PressedKeys:
+            if keys[0] == key:
+                return True
+        return False
 
     def AddFunc(self, key:str, functionName:str, functionArgs:tuple) -> None:
         """Adds a function to the entity functions dictionary"""
         self.funcs[key] = (functionName, functionArgs)
-        print(f"Linked function: '{functionName}({functionArgs[0]}, {functionArgs[1]})' >> '{key}'")
+        if self.EntDebug is True:
+            print(f"Linked function: '{functionName}({functionArgs[0]}, {functionArgs[1]})' >> '{key}'")
 
     def DelFunc(self, key:str) -> None:
         """Deletes the function from the entity functions dictionary"""
@@ -61,9 +86,9 @@ class Rect(Entity):
     """Rect Class (Entity): Inherits the Entity Class and Bridges to Pygame Rect"""
     Name:str
     RectObj:pygame.rect.FRect
-    color:tuple[int, int, int, int]
+    color:tuple[int, int, int, int]|pygame.surface.Surface
 
-    def __init__(self, name:str, rectAtt:tuple[float,float,float,float], color:tuple[int, int, int, int]|None):
+    def __init__(self, name:str, rectAtt:tuple[float,float,float,float], color:tuple[int, int, int, int]|pygame.surface.Surface|None):
         super().__init__()
         self.position = Vector2(rectAtt[0], rectAtt[1])
         self.scale = Vector2(rectAtt[2], rectAtt[3])
@@ -73,6 +98,10 @@ class Rect(Entity):
 
         if not color:
             self.color = (255, 255, 255, 255)
+        elif isinstance(color, pygame.surface.Surface):
+            if color.get_size() != (self.scale.x, self.scale.y):
+                color = pygame.transform.scale(color, (int(self.scale.x), int(self.scale.y)))
+            self.color = color.convert_alpha()
         else:
             self.color = color
 
@@ -104,4 +133,7 @@ class Rect(Entity):
 
     def Draw(self):
         """Draws the Entity"""
-        pygame.draw.rect(Display.GetScreen(), pygame.Color(self.color[0], self.color[1], self.color[2], self.color[3]), self.RectObj)
+        if isinstance(self.color, pygame.surface.Surface):
+            Display.GetScreen().blit(self.color, self.RectObj)
+        else:
+            pygame.draw.rect(Display.GetScreen(), pygame.Color(self.color[0], self.color[1], self.color[2], self.color[3]), self.RectObj)
