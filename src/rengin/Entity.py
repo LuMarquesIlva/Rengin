@@ -34,7 +34,12 @@ class Entity(Object):
 
     scale:Vector2 = Vector2(x2, y2)
 
-    funcs:dict[str, tuple[str, tuple]] = {}
+    funcs:dict[str, tuple[str, tuple]]
+
+    def __init__(self):
+        self.funcs = {} # Declares the funcs dict here so it does not get shared between instances of the Entity class
+        self.position = Vector2(self.x, self.y)
+        self.scale = Vector2(self.x2, self.y2)
 
     def UpdateInput(self):
         """Updates The Entity Input"""
@@ -130,6 +135,36 @@ class Rect(Entity):
         Display.ScreenObjects[Display.ScreenObjects.index(self)].position = self.position
         if self.EntDebug is True:
             return "Moved to: " + str(self.position)
+
+    def Scale(self, x:float, y:float):
+        """Scales the Entity to Direction (Vector2)"""
+        self.scale += Vector2(x, y)
+        self.RectObj.width = self.scale.x
+        self.RectObj.height = self.scale.y
+
+        Display.ScreenObjects[Display.ScreenObjects.index(self)].scale = self.scale
+        if self.EntDebug is True:
+            return "Scaled to: " + str(self.scale)
+
+    def SetScale(self, x:float, y:float):
+        """Sets the Entity Scale to Direction (Vector2)"""
+        self.scale = Vector2(x, y)
+        self.RectObj.width = self.scale.x
+        self.RectObj.height = self.scale.y
+
+        Display.ScreenObjects[Display.ScreenObjects.index(self)].scale = self.scale
+        if self.EntDebug is True:
+            return "Scale Set to: " + str(self.scale)
+
+    def SetPosition(self, x:float, y:float):
+        """Sets the Entity Position to Direction (Vector2)"""
+        self.position = Vector2(x, y)
+        self.RectObj.x = self.position.x
+        self.RectObj.y = self.position.y
+
+        Display.ScreenObjects[Display.ScreenObjects.index(self)].position = self.position
+        if self.EntDebug is True:
+            return "Position Set to: " + str(self.position)
 
     def Draw(self):
         """Draws the Entity"""
