@@ -14,7 +14,69 @@ def LoadImage(path:str) -> pygame.surface.Surface|None:
     except Exception as e:
         print(f"Error loading image: {path} - {e}")
         return None
-    
+
+class Animation:
+    Frames:list[pygame.surface.Surface]
+    FrameDuration:float
+    CurrentFrameIndex:int
+    TimeSinceLastFrame:float
+
+    def __init__(self, frames:list[pygame.surface.Surface], frame_duration:float):
+        self.Frames = frames
+        self.FrameDuration = frame_duration
+        self.CurrentFrameIndex = 0
+        self.TimeSinceLastFrame = 0.0
+
+    def Update(self, delta_time:float):
+        self.TimeSinceLastFrame += delta_time
+        if self.TimeSinceLastFrame >= self.FrameDuration:
+            self.CurrentFrameIndex = (self.CurrentFrameIndex + 1) % len(self.Frames)
+            self.TimeSinceLastFrame = 0.0
+
+    def GetCurrentFrame(self) -> pygame.surface.Surface:
+        return self.Frames[self.CurrentFrameIndex]
+
+    def Reset(self):
+        self.CurrentFrameIndex = 0
+        self.TimeSinceLastFrame = 0.0
+
+    def SetFrameDuration(self, frame_duration:float):
+        self.FrameDuration = frame_duration
+
+    def SetFrames(self, frames:list[pygame.surface.Surface|None]):
+        if not frames:
+            raise ValueError("Frames list cannot be empty")
+        
+        self.Frames = frames
+        self.CurrentFrameIndex = 0
+        self.TimeSinceLastFrame = 0.0
+
+    def GetFrameDuration(self) -> float:
+        return self.FrameDuration
+
+    def GetFrames(self) -> list[pygame.surface.Surface]:
+        return self.Frames
+
+    def GetCurrentFrameIndex(self) -> int:
+        return self.CurrentFrameIndex
+
+    def GetTimeSinceLastFrame(self) -> float:
+        return self.TimeSinceLastFrame
+
+    def SetCurrentFrameIndex(self, index:int):
+        if 0 <= index < len(self.Frames):
+            self.CurrentFrameIndex = index
+            self.TimeSinceLastFrame = 0.0
+        else:
+            raise IndexError("Frame index out of range")
+
+    def SetCurrentFrame(self, frame:int):
+        if 0 <= frame < len(self.Frames):
+            self.SetCurrentFrameIndex(frame)
+            self.SetColor(self.Frames[frame])
+        else:
+            print(f"Frame not found in frames list: {self.Frames}")
+            raise ValueError("Frame not found in frames list")
 
 class Object:
     """Object Class: Base class that adds position vector"""
@@ -24,7 +86,7 @@ class Object:
     position:Vector2 = Vector2(x, y)
 
 
-class Entity(Object):
+class Entity(Object, Animation):
     """Entity Class: It intherits the Object class and adds Scale vector and functions dictionary"""
     x2:float = 0.0
     y2:float = 0.0
@@ -37,6 +99,8 @@ class Entity(Object):
     funcs:dict[str, tuple[str, tuple]]
 
     def __init__(self):
+        super().__init__([], 1.0)
+
         self.funcs = {} # Declares the funcs dict here so it does not get shared between instances of the Entity class
         self.position = Vector2(self.x, self.y)
         self.scale = Vector2(self.x2, self.y2)
@@ -84,7 +148,20 @@ class Entity(Object):
 
         if self.EntDebug is True:
             print(f"Current Function: self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
-        ev = eval(f"self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
+
+        if not hasattr(self, functionName):
+            if self.EntDebug is True:
+                print(f"Function '{functionName}' not found in Entity class")
+            return
+
+        # Execute the function with the provided arguments while handling the case where functionArgs is not a tuple
+        if not isinstance(functionArgs, tuple):
+            eval(f"self.{functionName}({functionArgs})")
+        else:
+            if len(functionArgs) == 1:
+                eval(f"self.{functionName}({functionArgs[0]})")
+            elif len(functionArgs) == 2:
+                eval(f"self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
 
 
 class Rect(Entity):
@@ -114,6 +191,7 @@ class Rect(Entity):
 
     def __call__(self):
         return self.RectObj
+    
 
     def GetParentClass(self) -> type:
         """Returns the Parent Class of the Object"""
@@ -165,6 +243,15 @@ class Rect(Entity):
         Display.ScreenObjects[Display.ScreenObjects.index(self)].position = self.position
         if self.EntDebug is True:
             return "Position Set to: " + str(self.position)
+
+    def SetColor(self, color:tuple[int, int, int, int]|pygame.surface.Surface):
+        """Sets the Entity Color"""
+        if isinstance(color, pygame.surface.Surface):
+            if color.get_size() != (self.scale.x, self.scale.y):
+                color = pygame.transform.scale(color, (int(self.scale.x), int(self.scale.y)))
+            self.color = color.convert_alpha()
+        else:
+            self.color = color
 
     def Draw(self):
         """Draws the Entity"""
