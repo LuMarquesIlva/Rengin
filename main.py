@@ -1,14 +1,16 @@
+from unittest import case
+
 import pygame
 
-from src.rengin.Display import Display
-from src.rengin.Entity import Rect, LoadImage
+from src.rengin_sdk.Display import Display
+from src.rengin_sdk.Entity import Rect, LoadImage
 
-DefaultAssetsDir = "src/rengin/Assets"
+DefaultAssetsDir = "src/rengin_sdk/Assets"
 
 def main():
-    Display(800, 600, "Rengin")
+    Display(800, 600, "Rengin SDK")
 
-    from src.rengin.Input import Event
+    from src.rengin_sdk.Input import Event
 
     Event.Init()
 
@@ -28,11 +30,21 @@ def main():
     player.AddFunc("s", "Move", (0.0, 0.1))
     player.AddFunc("w", "Move", (0.0, -0.1))
 
-    player.AddFunc("f", "SetScale", (0.1, 0.1))
-    player.AddFunc("1", "SetCurrentFrame", (2,))
+    player.AddFunc("f", "SetScale", (80, 80))
 
     while not Event.quitvar:
         Event.Update()
+
+        if Event.InputEvent.IsAnyKeyPressed():
+            match Event.InputEvent.GetPressedKey():
+                case "1":
+                   player.SetCurrentFrame(0)
+                case "2":
+                    player.SetCurrentFrame(1)
+                case "3":
+                    player.SetCurrentFrame(2)
+                case _:
+                    pass
 
         Display.Update()
 

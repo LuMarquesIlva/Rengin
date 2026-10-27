@@ -91,10 +91,13 @@ class Entity(Object, Animation):
     x2:float = 0.0
     y2:float = 0.0
 
+    angle:float = 0.0
+
     EntDebug:bool = False
     EntityInputDebug:bool = False
 
     scale:Vector2 = Vector2(x2, y2)
+    rotation:float = 0.0
 
     funcs:dict[str, tuple[str, tuple]]
 
@@ -108,7 +111,7 @@ class Entity(Object, Animation):
     def UpdateInput(self):
         """Updates The Entity Input"""
         from .Input import Event
-        PressedKeys = Event.InputEvent.GetPressedKeys()
+        PressedKeys = Event.InputEvent.GetAllPressedKeys()
 
         for keys in PressedKeys:
             for func in self.funcs:
@@ -230,7 +233,10 @@ class Rect(Entity):
         self.RectObj.width = self.scale.x
         self.RectObj.height = self.scale.y
 
-        Display.ScreenObjects[Display.ScreenObjects.index(self)].scale = self.scale
+        print(self.RectObj)
+
+        Display.ScreenObjects[Display.ScreenObjects.index(self)].RectObj.width = self.RectObj.width
+        Display.ScreenObjects[Display.ScreenObjects.index(self)].RectObj.height = self.RectObj.height
         if self.EntDebug is True:
             return "Scale Set to: " + str(self.scale)
 

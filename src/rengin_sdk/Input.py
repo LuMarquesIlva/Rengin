@@ -1,5 +1,5 @@
 import pygame
-from rengin.Entity import Entity #pygame-ce
+from rengin_sdk.Entity import Entity #pygame-ce
 
 from .Display import Display
 
@@ -24,7 +24,7 @@ class Event:
 
         Event.InputEvent.Update()
 
-        for keys in Event.InputEvent.GetPressedKeys():
+        for keys in Event.InputEvent.GetAllPressedKeys():
             if Event.InputEvent.FiniteStateMachineListDebug is True:
                 print(f"Objects in Input Update: {str(Event.InputEvent.ObjectInputUpdate)}")
             for Obj in Event.InputEvent.ObjectInputUpdate:
@@ -44,7 +44,13 @@ class Event:
         Initialized:bool = False
 
         @staticmethod
-        def GetPressedKeys():
+        def IsAnyKeyPressed() -> bool:
+            if Event.InputEvent.GetAllPressedKeys() != []:
+                return True
+            return False
+
+        @staticmethod
+        def GetAllPressedKeys() -> list:
             PressedKeys = []
 
             for keys in Event.InputEvent.InputList:
@@ -53,8 +59,13 @@ class Event:
             return PressedKeys
 
         @staticmethod
-        def IsKeyPressed(key:str):
-            pressedKeys = Event.InputEvent.GetPressedKeys()
+        def GetPressedKey():
+            """Returns the current pressed keys"""
+            return Event.InputEvent.GetAllPressedKeys()[0][0] if Event.InputEvent.GetAllPressedKeys() != [] else None
+
+        @staticmethod
+        def IsKeyPressed(key:str) -> bool:
+            pressedKeys = Event.InputEvent.GetAllPressedKeys()
 
             for keys in pressedKeys:
                 if keys == key:

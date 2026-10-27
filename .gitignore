@@ -2,9 +2,13 @@
 __pycache__/
 *.py[oc]
 build/
+EDITOR/
 dist/
 wheels/
 *.egg-info
 
 # Virtual environments
 .venv
+
+subprojects/*
+!subprojects/*.wrap
