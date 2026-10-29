@@ -6,6 +6,8 @@ from PIL import Image
 from .Vector import Vector2
 from .Display import Display
 
+from typing import overload
+
 def LoadImage(path:str) -> pygame.surface.Surface|None:
     """Loads an Image and returns a Pygame Surface"""
     try:
@@ -101,6 +103,8 @@ class Entity(Object, Animation):
 
     funcs:dict[str, tuple[str, tuple]]
 
+    Name:str
+
     def __init__(self):
         super().__init__([], 1.0)
 
@@ -166,46 +170,67 @@ class Entity(Object, Animation):
             elif len(functionArgs) == 2:
                 eval(f"self.{functionName}({functionArgs[0]}, {functionArgs[1]})")
 
+    def AddToScreen(self):
+        """Add the Object to the Object Screen List"""
+        Display.ScreenObjects.append(self)
 
-class Rect(Entity):
-    """Rect Class (Entity): Inherits the Entity Class and Bridges to Pygame Rect"""
-    Name:str
-    RectObj:pygame.rect.FRect
-    color:tuple[int, int, int, int]|pygame.surface.Surface
+    def GetParentClass(self) -> type:
+        """Returns the Parent Class of the Object"""
+        return self.__class__.__bases__[0]
 
-    def __init__(self, name:str, rectAtt:tuple[float,float,float,float], color:tuple[int, int, int, int]|pygame.surface.Surface|None):
-        super().__init__()
-        self.position = Vector2(rectAtt[0], rectAtt[1])
-        self.scale = Vector2(rectAtt[2], rectAtt[3])
-        self.Name = name
-
-        self.RectObj = pygame.rect.FRect(self.position.x, self.position.y, self.scale.x, self.scale.y) # Sets the RectObj
-
-        if not color:
-            self.color = (255, 255, 255, 255)
-        elif isinstance(color, pygame.surface.Surface):
+    def SetColor(self, color:tuple[int, int, int, int]|pygame.surface.Surface):
+        """Sets the Entity Color"""
+        if isinstance(color, pygame.surface.Surface):
             if color.get_size() != (self.scale.x, self.scale.y):
                 color = pygame.transform.scale(color, (int(self.scale.x), int(self.scale.y)))
             self.color = color.convert_alpha()
         else:
             self.color = color
 
+    def GetColor(self) -> pygame.color.Color|pygame.surface.Surface:
+        if not isinstance(self.color, pygame.surface.Surface):
+            return pygame.color.Color(self.color[0], self.color[1], self.color[2], self.color[3])
+        else:
+            return self.color
+    
+    def GetColorValue(self) -> tuple[int, int, int, int]:
+        if not isinstance(self.color, pygame.surface.Surface):
+            return self.color
+        else:
+            return (255, 255, 255, 255)
+
+
+class Rect(Entity):
+    """Rect Class (Entity): Inherits the Entity Class and Bridges to Pygame Rect"""
+    RectObj:pygame.rect.FRect
+
+    color:tuple[int, int, int, int] | pygame.surface.Surface
+
+    def __init__(self, name:str, rectAtt:tuple[float,float,float,float], color:tuple[int, int, int, int]|pygame.surface.Surface|None):
+        super().__init__()
+        self.color = (255, 255, 255, 255)
+        if not isinstance(color, pygame.surface.Surface):
+            self.color = color
+        elif isinstance(color, pygame.surface.Surface):
+            if color.get_size() != (self.scale.x, self.scale.y):
+                color = pygame.transform.scale(color, (int(self.scale.x), int(self.scale.y)))
+                self.color = color.convert_alpha()
+        else:
+            self.color = color
+
+        self.position = Vector2(rectAtt[0], rectAtt[1])
+        self.scale = Vector2(rectAtt[2], rectAtt[3])
+        self.Name = name
+
+        self.RectObj = pygame.rect.FRect(self.position.x, self.position.y, self.scale.x, self.scale.y) # Sets the RectObj
+
         self.AddToScreen()
 
     def __call__(self):
-        return self.RectObj
-    
-
-    def GetParentClass(self) -> type:
-        """Returns the Parent Class of the Object"""
-        return self.__class__.__bases__[0]
+        return self.RectObj    
 
     def UpdateInput(self):
         super().UpdateInput()
-
-    def AddToScreen(self):
-        """Add the Object to the Object Screen List"""
-        Display.ScreenObjects.append(self)
 
     def Move(self, x:float, y:float):
         """Moves the Entity to Direction (Vector2)"""
@@ -250,18 +275,38 @@ class Rect(Entity):
         if self.EntDebug is True:
             return "Position Set to: " + str(self.position)
 
-    def SetColor(self, color:tuple[int, int, int, int]|pygame.surface.Surface):
-        """Sets the Entity Color"""
-        if isinstance(color, pygame.surface.Surface):
-            if color.get_size() != (self.scale.x, self.scale.y):
-                color = pygame.transform.scale(color, (int(self.scale.x), int(self.scale.y)))
-            self.color = color.convert_alpha()
-        else:
-            self.color = color
-
     def Draw(self):
         """Draws the Entity"""
         if isinstance(self.color, pygame.surface.Surface):
             Display.GetScreen().blit(self.color, self.RectObj)
         else:
             pygame.draw.rect(Display.GetScreen(), pygame.Color(self.color[0], self.color[1], self.color[2], self.color[3]), self.RectObj)
+
+
+class Line(Entity):
+
+    width:int
+    color:tuple[int, int, int, int]
+
+    def __init__(self, name:str, posX:float, posY:float, posX2:float, posY2:float, width:int, color:tuple[int, int, int, int]|None):
+        super().__init__()
+        if not color == None:
+            self.color = color
+        else:
+            self.color = (255, 255, 255, 255)
+        self.width = width
+
+        self.x, self.y = posX, posY
+        self.position = Vector2(self.x, self.y)
+
+        self.x2, self.y2 = posX2, posY2
+        self.scale = Vector2(self.x2, self.y2)
+
+        self.Name = name
+
+        self.funcs = {}
+
+        self.AddToScreen()
+
+    def Draw(self):
+        pygame.draw.line(Display.GetScreen(), self.GetColor(), (self.x, self.y), (self.x2, self.y2), self.width)

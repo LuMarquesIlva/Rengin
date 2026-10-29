@@ -21,6 +21,23 @@
       "command": "uv",
       "args": ["sync"],
       "problemMatcher": []
+    },
+    {
+      "label": "uv: Build Editor",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "${workspaceFolder}/BUILD_EDITOR.py"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "run: Editor",
+      "type": "shell",
+      "command": "${cwd}/EDITOR/Rengin_Editor",
+      "args": [""],
     }
   ]
 }   

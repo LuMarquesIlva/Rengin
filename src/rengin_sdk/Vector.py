@@ -1,4 +1,6 @@
-class Vector2:
+from typing import Sequence, overload, Union
+
+class Vector2(Sequence[tuple[float, float]]):
     """The Vector2 Class"""
     x:float|int
     y:float|int
@@ -32,3 +34,17 @@ class Vector2:
 
     def __call__(self):
         return self.Values
+
+    @overload
+    def __getitem__(self, index:int, /): # Converts to be usable as sequence like by pygame
+        return tuple(self.Values)
+
+    @overload
+    def __getitem__(self, index:slice):
+        return self.Values
+
+    def __getitem__(self, index:Union[int, slice]) -> Union[float, 'tuple[float, float]']:
+        return self.Values
+
+    def __len__(self):
+        return len(self.Values)

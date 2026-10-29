@@ -3,7 +3,7 @@ from unittest import case
 import pygame
 
 from src.rengin_sdk.Display import Display
-from src.rengin_sdk.Entity import Rect, LoadImage
+from src.rengin_sdk.Entity import Rect, LoadImage, Line
 
 DefaultAssetsDir = "src/rengin_sdk/Assets"
 
@@ -18,6 +18,8 @@ def main():
 
     player = Rect("Player", (30, 40, 80, 80), tile_material)
     player2 = Rect("Player2", (200, 200, 80, 80), (255, 50, 0, 255))
+
+    linha = Line("Linha", 305, 150, 225, 200, 1, (50, 200, 200, 255))
 
     player.SetFrames([
         LoadImage(f"{DefaultAssetsDir}/Images/Materials/TilePlaceholder/R_TileMaterial.png"),
